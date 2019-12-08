@@ -3,7 +3,23 @@ use std::fs::File;
 use std::io::{BufReader, BufRead, Error};
 
 fn fuel_required(mass: f32) -> f32 {
-    let fuel_req = (mass / 3.0).floor() - 2.0;
+    let fuel_req = ((mass / 3.0).floor() - 2.0).max(0.0);
+    fuel_req
+} 
+
+fn total_fuel_required(mass: f32) -> f32 {
+    println!("Calculating fuel required for {:?}", mass);
+    let mut fuel_req = fuel_required(mass);
+    let mut added_fuel = fuel_required(fuel_req);
+    loop {
+        println!("Need to add {:?} fuel for the fuel", added_fuel);
+        fuel_req  += added_fuel;
+        added_fuel = fuel_required(added_fuel);
+        if added_fuel == 0.0 {
+            break;
+        }
+    }
+    println!("Total fuel needed for module: {:?}", fuel_req);
     fuel_req
 }
 
@@ -46,11 +62,14 @@ fn main() -> Result<(), Error> {
                 Err(why)   => panic!("{:?}",why),
                 Ok(string) => match string.trim().parse::<f32>() {
                     Err(why)   => panic!("Not a number: {:?}",why),
-                    Ok(number) => total_fuel += fuel_required(number)
+                    Ok(number) => {
+                        total_fuel += total_fuel_required(number)
+                    }
                 } 
             }
         }
-        println!("Total fuel needed: {:?}",total_fuel)
+        println!("Total fuel needed for ALL modules: {:?}",total_fuel);
+        // Now we need to add fuel for the fuel
     }
     Ok(())
 }
