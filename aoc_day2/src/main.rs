@@ -41,31 +41,34 @@ impl Computer {
        
     }
 
+    fn set_input(&mut self, noun: i64, verb: i64) -> () {
+        self.codes[1] = noun;
+        self.codes[2] = verb;
+        ()
+    }
+
     fn run(&mut self) -> i64 {
         loop {
-            println!("Current program state: {:?}",self.codes);
+            //println!("Current program state: {:?}",self.codes);
             let instruction = self.current_code();
             match instruction {
                 1 => {
-                    println!("Adding! Found a {} at {}", instruction, self.ptr);
+                    //println!("Adding! Found a {} at {}", instruction, self.ptr);
                     self.add(); 
                 },
                 2 => {
-                    println!("Multiplying! Found a {} at {}", instruction, self.ptr);
+                    //println!("Multiplying! Found a {} at {}", instruction, self.ptr);
                     self.mult();
 
                 },
                 99 => {
-                    println!("Aborting!, Found a {} at {}", instruction, self.ptr);
+                    //println!("Aborting!, Found a {} at {}", instruction, self.ptr);
                     break;
                 },
                 _ => {
                     panic!("Bad instruction")
                 }
             }
-
-            println!("Current pointer is: {}", self.ptr);
-            println!("Current code is: {}",self.current_code());
             self.ptr += 4;
         }
         return self.codes[0]
@@ -90,12 +93,33 @@ fn main() -> Result<(), Error> {
             .split(',')
             .map(|x| x.parse().unwrap()).collect();
 
-        let mut c = Computer::new(opcodes);
+        let mut c = Computer::new(opcodes.clone());
+        c.set_input(12,2);
 
         println!("Found {:?} OpCodes",c.len());
         
         let output = c.run();
         println!("Program ended with a {} at position 0",output);
+
+        println!("\n\n\n------------------------------------------------");
+        println!("Calculating part 2");
+
+        'outer: for x in 0..100 {
+            'inner: for y in 0..100 {
+                let mut c = Computer::new(opcodes.clone());
+                c.set_input(x,y);
+                let output = c.run();
+                //println!("Calculating output for {} and {}",x,y);
+                if output == 19690720 {
+                    println!("To get 19690720, used noun={} and verb={}",x,y);
+                    println!("100*noun*verb = {}", 100*x+y);
+                    break 'outer;
+                }
+            }
+        }
+
+
+            
 
     }
     Ok(())
