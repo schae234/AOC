@@ -1,5 +1,5 @@
 [package]
-name = "Day1"
+name = "day1"
 version = "0.1.0"
 authors = ["Rob Schaefer <rob@linkage.io>"]
 edition = "2018"
