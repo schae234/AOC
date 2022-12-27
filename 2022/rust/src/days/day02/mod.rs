@@ -106,10 +106,7 @@ impl Outcome {
             Outcome::Draw => opp.drawer(),
             Outcome::Lose => opp.loser(),
         };
-        Hand {
-            opponent: opp,
-            you: you,
-        }
+        Hand { opponent: opp, you }
     }
 }
 
