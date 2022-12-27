@@ -12,6 +12,7 @@ fn main() -> Result<(), Error> {
     match args[1].as_str() as &str {
         "day01" => days::day01::mod_main(day_args)?,
         "day02" => days::day02::mod_main(day_args)?,
+        "day03" => days::day03::mod_main(day_args)?,
         _ => {
             panic!("{:?} not a valid AOC day", args[1])
         }
