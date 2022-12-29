@@ -14,6 +14,7 @@ fn main() -> Result<(), Error> {
         "day02" => days::day02::mod_main(day_args)?,
         "day03" => days::day03::mod_main(day_args)?,
         "day04" => days::day04::mod_main(day_args)?,
+        "day05" => days::day05::mod_main(day_args)?,
         _ => {
             panic!("{:?} not a valid AOC day", args[1])
         }
