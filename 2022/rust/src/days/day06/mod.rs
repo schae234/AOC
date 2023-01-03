@@ -17,7 +17,7 @@ pub fn mod_main(args: Vec<String>) -> Result<(), Error> {
 
         let mut message: VecDeque<char> = VecDeque::new();
         let mut message_found = false;
-        for code in line_res?.chars() {
+        fr code in line_res?.chars() {
             position += 1;
             window.push_back(code);
             // part1
