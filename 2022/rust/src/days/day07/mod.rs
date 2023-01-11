@@ -38,6 +38,7 @@ impl Node {
             child.borrow().print_tree(ilevel+1);
         }
     }
+
     fn is_dir(&self) -> bool {
         match self.size {
             0 => true,
@@ -55,10 +56,12 @@ impl Node {
 }
 
 fn all_dirs(n: NodeHandle) -> Box<dyn Iterator<Item = NodeHandle>> {
-        // clippy is wrong and should feel bad
+    
+    // This is needed to make clippy happy. Collect the children into a vector
     #[allow(clippy::needless_collect)]
     let children = n.borrow().children.iter().cloned().collect::<Vec<_>>();
 
+    // Return 
     Box::new(
         std::iter::once(n).chain(
             children
@@ -74,7 +77,6 @@ fn all_dirs(n: NodeHandle) -> Box<dyn Iterator<Item = NodeHandle>> {
         ),
     )
 }
-
 
 
 pub fn mod_main(args: Vec<String>) -> Result<(), Error> {
@@ -173,14 +175,32 @@ pub fn mod_main(args: Vec<String>) -> Result<(), Error> {
         }
     } 
     root.borrow().print_tree(0);
-    
-    let sum = all_dirs(root)
+   
+    // Part 1
+    let part1 = all_dirs(root.clone())
     .map(|d| d.borrow().total_size())
     .filter(|&s| s <= 100_000)
     .inspect(|s| {
         dbg!(s);
     })
     .sum::<u64>();
-    dbg!(sum);
+    println!("Part 1 total: {part1}");
+
+    // Part2
+    let current_unused_space = 70000000 - root.borrow().total_size();
+    println!("Total root size: {}",root.borrow().total_size());
+    println!("Total unused size: {}", current_unused_space);
+    let target_size: i64 = 30000000 - current_unused_space as i64;
+    println!("Target size: {}", target_size);
+    let part2: (i64,i64) = all_dirs(root)
+    .map(
+        |d| (d.borrow().total_size() as i64 - target_size, d.borrow().total_size() as i64)
+    )
+    .filter(|&a| a.0 > 0)
+    .min_by(|a,b| a.0.cmp(&b.0))
+    .unwrap();
+
+    println!("Part2 - target diff: {} dir size:{}", part2.0, part2.1);
+
     Ok(())
 }
