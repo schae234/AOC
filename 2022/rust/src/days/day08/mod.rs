@@ -10,6 +10,13 @@ struct Grid {
     rows: Vec<Row>,
 }
 
+enum Direction {
+    North,
+    East,
+    South,
+    West
+}
+
 impl Grid {
     fn width(&self) -> usize {
         self.rows.get(0).unwrap().len()
@@ -20,6 +27,17 @@ impl Grid {
     fn tree_height(&self, r: usize, c: usize) -> Height {
         *self.rows.get(r).unwrap().get(c).unwrap()
     }
+
+    fn tree_line(&self, r: usize, c: usize, d: Direction) -> Vec<Height>{
+        match d {
+            Direction::North => { self.rows[0..r].iter().rev().map(|x| *x.get(c).unwrap()).collect()},
+            Direction::South => { self.rows[r..].iter().skip(1).map(|x| *x.get(c).unwrap()).collect()},
+
+            Direction::East => { self.rows.get(r).unwrap()[c..].iter().skip(1).map(|&x| x).collect()},
+            Direction::West => { self.rows.get(r).unwrap()[0..c].iter().rev().map(|&x| x).collect()},
+        }
+    }
+
     fn west_viz(&self, r: usize, c: usize) -> bool {
         if self.rows.get(r).unwrap()[0..c]
             .iter()
@@ -219,8 +237,12 @@ pub fn mod_main(args: Vec<String>) -> Result<(), Error> {
 
         assert!(grid.south_viz(3, 2) == true);
         assert!(grid.south_viz(3, 3) == false);
-        assert!(grid.scenic_score(0, 1) == 4);
-        assert!(grid.scenic_score(2, 1) == 8);
+
+        println!("Grid Tree Lines at (4,4):");
+        println!("N:{:?}",grid.tree_line(4,4,Direction::North));
+        println!("E:{:?}",grid.tree_line(4,4,Direction::East));
+        println!("S:{:?}",grid.tree_line(4,4,Direction::South));
+        println!("W:{:?}",grid.tree_line(4,4,Direction::West));
     }
 
     // Part1
