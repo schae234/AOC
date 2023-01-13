@@ -9,7 +9,6 @@ use std::fmt;
 
 type NodeHandle = Rc<RefCell<Node>>;
 
-#[allow(dead_code)]
 #[derive(Default)]
 struct Node {
     name: String,
@@ -17,6 +16,7 @@ struct Node {
     children: Vec<NodeHandle>,
     parent: Option<NodeHandle>,
 }
+
 impl fmt::Debug for Node {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Node")
