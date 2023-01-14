@@ -107,74 +107,26 @@ impl Grid {
         return num_visible;
     }
 
-    fn scenic_score(&self, r: usize, c: usize) -> usize {
-        println!("Scenic score for {r},{c}");
-        let cur_height = self.tree_height(r, c);
-        let mut north_score = 0;
-        let start = if r == 0 { 0 } else { r - 1 };
-        for ri in start..=0 {
-            println!("N:{ri},{c}");
-            match cur_height.cmp(&self.tree_height(ri, c)) {
-                Ordering::Greater => north_score += 1,
-                Ordering::Equal => {
-                    north_score += 1;
-                    break;
+    fn tree_line_scenic_score(&self, r: usize, c: usize, d: Direction) -> usize {
+        let cur_height = self.tree_height(r,c);
+        let mut score = 0;
+        for t in self.tree_line(r,c,d) {
+            match cur_height.cmp(&t) {
+                Ordering::Greater => score += 1,
+                Ordering::Equal | Ordering::Less => {
+                    score += 1;
+                  break;
                 }
-                Ordering::Less => break,
-            };
+            } 
         }
-        let mut south_score = 0;
-        let start = if r == self.height() {
-            self.height()
-        } else {
-            r + 1
-        };
-        for ri in start..self.height() {
-            println!("S:{ri},{c}");
-            match cur_height.cmp(&self.tree_height(ri, c)) {
-                Ordering::Greater => south_score += 1,
-                Ordering::Equal => {
-                    south_score += 1;
-                    break;
-                }
-                Ordering::Less => break,
-            };
-        }
-        let mut east_score = 0;
-        let start = if c == self.width() {
-            self.width()
-        } else {
-            c + 1
-        };
-        for ci in c + start..self.width() {
-            println!("E:{r},{ci}");
-            match cur_height.cmp(&self.tree_height(r, ci)) {
-                Ordering::Greater => east_score += 1,
-                Ordering::Equal => {
-                    east_score += 1;
-                    break;
-                }
-                Ordering::Less => break,
-            };
-        }
-        let mut west_score = 0;
-        let start = if c == 0 { 0 } else { c - 1 };
+        return score;
+    }
 
-        for ci in start..=0 {
-            println!("W:{r},{ci}");
-            match cur_height.cmp(&self.tree_height(r, ci)) {
-                Ordering::Greater => west_score += 1,
-                Ordering::Equal => {
-                    west_score += 1;
-                    break;
-                }
-                Ordering::Less => break,
-            };
-        }
-        dbg!(north_score);
-        dbg!(east_score);
-        dbg!(south_score);
-        dbg!(west_score);
+    fn scenic_score(&self, r: usize, c: usize) -> usize {
+        let north_score = self.tree_line_scenic_score(r,c,Direction::North);
+        let south_score = self.tree_line_scenic_score(r,c,Direction::South);
+        let east_score = self.tree_line_scenic_score(r,c,Direction::East);
+        let west_score = self.tree_line_scenic_score(r,c,Direction::West);
         north_score * east_score * south_score * west_score
     }
 }
@@ -238,15 +190,28 @@ pub fn mod_main(args: Vec<String>) -> Result<(), Error> {
         assert!(grid.south_viz(3, 2) == true);
         assert!(grid.south_viz(3, 3) == false);
 
-        println!("Grid Tree Lines at (4,4):");
-        println!("N:{:?}",grid.tree_line(4,4,Direction::North));
-        println!("E:{:?}",grid.tree_line(4,4,Direction::East));
-        println!("S:{:?}",grid.tree_line(4,4,Direction::South));
-        println!("W:{:?}",grid.tree_line(4,4,Direction::West));
+        println!("Grid Tree Lines at (0,0):");
+        println!("N:{:?}",grid.tree_line(0,0,Direction::North));
+        println!("E:{:?}",grid.tree_line(0,0,Direction::East));
+        println!("S:{:?}",grid.tree_line(0,0,Direction::South));
+        println!("W:{:?}",grid.tree_line(0,0,Direction::West));
     }
 
     // Part1
     println!("Part 1, num visible: {}", grid.num_visible());
+
+
+    // Part2
+    let mut max_score = 0;
+    for (r,rv) in grid.rows.iter().enumerate(){
+        for (c, _) in rv.iter().enumerate(){
+            let score = grid.scenic_score(r,c);
+            if score > max_score{
+                max_score = score;
+            }
+        }
+    }
+    println!("Part 2 max score: {max_score}");
 
     Ok(())
 }
