@@ -6,11 +6,16 @@ use std::fs::File;
 use std::hash::{Hash, Hasher};
 use std::io::{BufRead, BufReader, Error};
 
+#[derive(Clone, Copy)]
 enum Direction {
     Up,
     Right,
     Down,
     Left,
+}
+enum Dimension {
+    X,
+    Y,
 }
 
 impl Direction {
@@ -40,113 +45,114 @@ impl Hash for Coordinate {
 
 #[derive(Default, Debug)]
 struct Rope {
-    head: Coordinate,
-    tail: Coordinate,
+    knots: [Coordinate; 10],
     tail_been: HashSet<Coordinate>,
 }
 
-enum Dimension {
-    X,
-    Y,
-}
-
 impl Rope {
-    fn move_head(&mut self, d: Direction, times: isize) {
-        for _ in 0..times {
-            match d {
-                Direction::Up => self.head.y.set(self.head.y.get() + 1),
-                Direction::Right => self.head.x.set(self.head.x.get() + 1),
-                Direction::Down => self.head.y.set(self.head.y.get() - 1),
-                Direction::Left => self.head.x.set(self.head.x.get() - 1),
-            }
-            self.move_tail();
-            println!("{}", self);
+    fn move_head(&mut self, d: Direction) {
+        match d {
+            Direction::Up => self.knots[0].y.set(self.knots[0].y.get() + 1),
+            Direction::Right => self.knots[0].x.set(self.knots[0].x.get() + 1),
+            Direction::Down => self.knots[0].y.set(self.knots[0].y.get() - 1),
+            Direction::Left => self.knots[0].x.set(self.knots[0].x.get() - 1),
         }
+        for i in 1..self.knots.len() {
+            self.move_knot(i);
+        }
+        self.tail_been.insert(self.knots[self.knots.len() - 1].clone());
     }
-    fn is_stretched(&self) -> Option<Dimension> {
-        if (self.head.x.get() - self.tail.x.get()).abs() >= 2 {
+
+    fn is_stretched(&self, i: usize) -> Option<Dimension> {
+        if i == 0 {
+            return None;
+        }
+        if (self.knots[i].x.get() - self.knots[i - 1].x.get()).abs() >= 2 {
             return Some(Dimension::X);
-        } else if (self.head.y.get() - self.tail.y.get()).abs() >= 2 {
+        } else if (self.knots[i].y.get() - self.knots[i - 1].y.get()).abs() >= 2 {
             return Some(Dimension::Y);
         } else {
             return None;
         }
     }
 
-    fn move_tail(&mut self) -> Option<()> {
-        match self.is_stretched() {
+    fn move_knot(&mut self, i: usize) -> Option<()> {
+        match self.is_stretched(i) {
             Some(dim) => {
-                match self.head.x.get().cmp(&self.tail.x.get()) {
+                match self.knots[i - 1].x.get().cmp(&self.knots[i].x.get()) {
                     // Same row
-                    Ordering::Equal => match self.head.y.get().cmp(&self.tail.y.get()) {
-                        Ordering::Greater => self.tail.y.set(self.head.y.get() - 1),
-                        Ordering::Less => self.tail.y.set(self.head.y.get() + 1),
+                    Ordering::Equal => match self.knots[i - 1].y.get().cmp(&self.knots[i].y.get()) {
+                        Ordering::Greater => self.knots[i].y.set(self.knots[i - 1].y.get() - 1),
+                        Ordering::Less => self.knots[i].y.set(self.knots[i - 1].y.get() + 1),
                         Ordering::Equal => { /*Head and tail are in the same spot*/ }
                     },
-                    Ordering::Greater => match self.head.y.get().cmp(&self.tail.y.get()) {
+                    Ordering::Greater => match self.knots[i - 1].y.get().cmp(&self.knots[i].y.get()) {
                         Ordering::Greater => match dim {
                             Dimension::X => {
-                                self.tail.y.set(self.head.y.get());
-                                self.tail.x.set(self.head.x.get() - 1);
+                                self.knots[i].y.set(self.knots[i - 1].y.get());
+                                self.knots[i].x.set(self.knots[i - 1].x.get() - 1);
                             }
                             Dimension::Y => {
-                                self.tail.x.set(self.head.x.get());
-                                self.tail.y.set(self.head.y.get() - 1);
+                                self.knots[i].x.set(self.knots[i - 1].x.get());
+                                self.knots[i].y.set(self.knots[i - 1].y.get() - 1);
                             }
                         },
                         Ordering::Less => match dim {
                             Dimension::X => {
-                                self.tail.y.set(self.head.y.get());
-                                self.tail.x.set(self.head.x.get() - 1);
+                                self.knots[i].y.set(self.knots[i - 1].y.get());
+                                self.knots[i].x.set(self.knots[i - 1].x.get() - 1);
                             }
                             Dimension::Y => {
-                                self.tail.x.set(self.head.x.get());
-                                self.tail.y.set(self.head.y.get() + 1);
+                                self.knots[i].x.set(self.knots[i - 1].x.get());
+                                self.knots[i].y.set(self.knots[i - 1].y.get() + 1);
                             }
                         },
-                        Ordering::Equal => self.tail.x.set(self.head.x.get() - 1),
+                        Ordering::Equal => self.knots[i].x.set(self.knots[i - 1].x.get() - 1),
                     },
-                    Ordering::Less => match self.head.y.get().cmp(&self.tail.y.get()) {
+                    Ordering::Less => match self.knots[i - 1].y.get().cmp(&self.knots[i].y.get()) {
                         Ordering::Greater => match dim {
                             Dimension::X => {
-                                self.tail.y.set(self.head.y.get());
-                                self.tail.x.set(self.head.x.get() + 1);
+                                self.knots[i].y.set(self.knots[i - 1].y.get());
+                                self.knots[i].x.set(self.knots[i - 1].x.get() + 1);
                             }
                             Dimension::Y => {
-                                self.tail.x.set(self.head.x.get());
-                                self.tail.y.set(self.head.y.get() - 1);
+                                self.knots[i].x.set(self.knots[i - 1].x.get());
+                                self.knots[i].y.set(self.knots[i - 1].y.get() - 1);
                             }
                         },
                         Ordering::Less => match dim {
                             Dimension::X => {
-                                self.tail.y.set(self.head.y.get());
-                                self.tail.x.set(self.head.x.get() + 1);
+                                self.knots[i].y.set(self.knots[i - 1].y.get());
+                                self.knots[i].x.set(self.knots[i - 1].x.get() + 1);
                             }
                             Dimension::Y => {
-                                self.tail.x.set(self.head.x.get());
-                                self.tail.y.set(self.head.y.get() + 1);
+                                self.knots[i].x.set(self.knots[i - 1].x.get());
+                                self.knots[i].y.set(self.knots[i - 1].y.get() + 1);
                             }
                         },
-                        Ordering::Equal => self.tail.x.set(self.head.x.get() + 1),
+                        Ordering::Equal => self.knots[i].x.set(self.knots[i - 1].x.get() + 1),
                     },
                 }
             }
             None => {}
         }
-        self.tail_been.insert(self.tail.clone());
         Some(())
     }
 }
 
 impl fmt::Display for Rope {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for y in (0..5).rev() {
-            for x in 0..=5 {
-                if self.head.x.get() == x && self.head.y.get() == y {
-                    write!(f, "H")?;
-                } else if self.tail.x.get() == x && self.tail.y.get() == y {
-                    write!(f, "T")?;
-                } else {
+        for y in (-5..15).rev() {
+            for x in -11..=14 {
+                // iterate through knots and see if x,y
+                let mut overlapped: bool = false;
+                for (i, knot) in self.knots.iter().enumerate() {
+                    if !overlapped && knot.x.get() == x && knot.y.get() == y {
+                        write!(f, "{}", i)?;
+                        overlapped = true;
+                    }
+                }
+                if !overlapped {
                     write!(f, ".")?;
                 }
             }
@@ -165,15 +171,15 @@ pub fn mod_main(args: Vec<String>) -> Result<(), Error> {
     println!("== Initial State ==");
     println!("{}", rope);
 
-    for line in BufReader::new(File::open(&args[0])?)
-        .lines()
-        .map(|x| x.unwrap())
-    {
+    for line in BufReader::new(File::open(&args[0])?).lines().map(|x| x.unwrap()) {
         println!("== {} ==", line.clone());
         let (ds, ns) = line.split_once(" ").unwrap();
         let d = Direction::from_str(ds).unwrap();
         let n = str::parse::<isize>(ns).unwrap();
-        rope.move_head(d, n);
+        for _ in 1..=n {
+            rope.move_head(d.clone());
+        }
+        println!("{}", rope);
     }
     println!("Tail has been to {} coordinates", rope.tail_been.len());
     Ok(())

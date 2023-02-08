@@ -6,15 +6,15 @@ use std::io::{BufRead, BufReader, Error};
 type Height = u32;
 type Row = Vec<Height>;
 
-struct Grid {
-    rows: Vec<Row>,
-}
-
 enum Direction {
     North,
     East,
     South,
     West,
+}
+
+struct Grid {
+    rows: Vec<Row>,
 }
 
 impl Grid {
