@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::fmt;
 use std::fs::File;
-use std::hash::{Hash, Hasher};
+use std::hash::Hash;
 use std::io::{BufRead, BufReader, Error};
 
 #[derive(Clone, Copy)]
