@@ -69,27 +69,41 @@ struct CPU {
 impl CPU {
     fn run(&mut self) -> () {
         let mut part_1_total = 0;
+
+        let mut crt: Vec<Vec<char>> = Vec::new();
+        let mut crt_row: Vec<char> = Vec::new();
+
         while self.instruction_pipeline.len() > 0 {
             let mut current_instruction = self.instruction_pipeline.pop_front().unwrap();
-            //println!("Currently on instruction {:?}", current_instruction);
             while !current_instruction.is_complete() {
+                // Update the CRT display pixel
+                if (self.state.x_register - crt_row.len() as isize).abs() <= 1 {
+                    crt_row.push('#');
+                } else {
+                    crt_row.push('.');
+                }
+                if crt_row.len() >= 40 {
+                    crt.push(crt_row);
+                    crt_row = Vec::new();
+                }
+
+                // Step the current instruction along to update the CPU state
                 current_instruction.step(&mut self.state);
 
+                // If we are on a signal cycle, update the part 1 total
                 if self.state.total_cycles == self.signal_cycle {
-                    println!(
-                        "On cycle {:?}, CPU state: {:?} - signal strength: {}",
-                        self.state.total_cycles,
-                        self.state,
-                        self.state.x_register * self.state.total_cycles
-                    );
                     self.signal_cycle += 40;
                     part_1_total += self.state.x_register * self.state.total_cycles;
-                } else {
-                    //println!("On cycle {:?}", self.state.total_cycles);
                 }
             }
         }
         println!("Part 1 total: {}", part_1_total);
+
+        println!("Part 2:\n");
+        for v in crt.iter() {
+            let row: String = v.iter().collect();
+            println!("{}", row);
+        }
     }
 }
 
